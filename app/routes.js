@@ -68,17 +68,26 @@ module.exports = function(app, passport) {
 
     app.post('/upccode', function(req, res, next) {
       console.log('req.body', req.body);
-      const newUpcCode = new upcCode({
-        upc: [{
-          product_name: req.body.product_name,
-          upc: req.body.upc
-        }]
+      const userUpcCode = req.body.upc
+      const userProductName = req.body.product_name;
+      upcCode.findOneAndUpdate({'upc.$.upc': userUpcCode},
+        { $set: {'upc.$.product_name': userProductName, 'upc.$.upc': userUpcCode } },
+        { upsert: true, new: true }, function(err, code) {
+          if (err)
+            return res.status(404).json({err: err});
+          res.send(code);
       });
-      newUpcCode.save(function (err, upcCode) {
-        if (err)
-          return next(err);
-        res.json(201, upcCode);
-      });
+    //   const newUpcCode = new upcCode({
+    //     upc: [{
+    //       product_name: userProductName,
+    //       upc: userUpcCode
+    //     }]
+    //   });
+    //   newUpcCode.save(function (err, upcCode) {
+    //     if (err)
+    //       return next(err);
+    //     res.send(201, upcCode);
+    //   });
     });
 };
 
