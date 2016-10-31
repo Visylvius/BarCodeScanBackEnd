@@ -41,9 +41,7 @@ module.exports = function(app, passport) {
     // we will want this protected so you have to be logged in to visit
     // we will use route middleware to verify this (the isLoggedIn function)
     app.get('/profile', isLoggedIn, function(req, res) {
-        res.render('profile.ejs', {
-            user: req.user // get the user out of session and pass to template
-        });
+        res.render('profile.ejs');
     });
 
     // =====================================
@@ -66,28 +64,30 @@ module.exports = function(app, passport) {
         failureFlash : true // allow flash messages
     }));
 
+    app.get('/upccode', function(req, res) {
+      console.log('in the route');
+      upcCode.find({}, function(err, data) {
+        if (err) return res.status(400).json({err});
+        res.status(200).json({upc: data});
+      });
+    });
+
     app.post('/upccode', function(req, res, next) {
       console.log('req.body', req.body);
       const userUpcCode = req.body.upc
       const userProductName = req.body.product_name;
-      upcCode.findOneAndUpdate({'upc.$.upc': userUpcCode},
-        { $set: {'upc.$.product_name': userProductName, 'upc.$.upc': userUpcCode } },
-        { upsert: true, new: true }, function(err, code) {
-          if (err)
-            return res.status(404).json({err: err});
-          res.send(code);
+      upcCode.findOne({upc: userUpcCode}, function(err, code) {
+        console.log('yarr', code);
+        if (!code) {
+          upcCode.create({product_name: userProductName, upc: userUpcCode}, function(err, code) {
+            if (err) return res.status(400).send({err});
+            return res.status(201).send();
+          });
+        } else {
+          console.log('error', err);
+          res.status(400).send({message: 'that upc code already exists'});
+        }
       });
-    //   const newUpcCode = new upcCode({
-    //     upc: [{
-    //       product_name: userProductName,
-    //       upc: userUpcCode
-    //     }]
-    //   });
-    //   newUpcCode.save(function (err, upcCode) {
-    //     if (err)
-    //       return next(err);
-    //     res.send(201, upcCode);
-    //   });
     });
 };
 
