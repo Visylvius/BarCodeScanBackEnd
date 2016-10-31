@@ -81,7 +81,7 @@ module.exports = function(app, passport) {
         if (!code) {
           upcCode.create({product_name: userProductName, upc: userUpcCode}, function(err, code) {
             if (err) return res.status(400).send({err});
-            return res.status(201).send();
+            return res.status(201).send('the code was created');
           });
         } else {
           console.log('error', err);
